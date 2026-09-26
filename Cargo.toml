@@ -1,0 +1,24 @@
+[package]
+name = "cfbk"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Ordered fallback executor: a configured order, a minimum standard, health reports, no silent downgrade"
+license = "LGPL-3.0-only WITH LGPL-3.0-linking-exception"
+repository = "https://github.com/corbet-foss/cfbk"
+readme = "README.md"
+publish = false
+include = ["Cargo.toml", "src/**", "README.md", "LICENSE", "LICENSE.md", "LICENSES/LGPL-3.0-only.txt", "LICENSES/LGPL-3.0-linking-exception.txt", "LICENSES/GPL-3.0-only.txt"]
+
+[lib]
+crate-type = ["rlib"]
+
+# Pure logic: no runtime dependencies, no I/O, no clock, no randomness.
+[dependencies]
+
+[dev-dependencies]
+proptest = "1.11"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
