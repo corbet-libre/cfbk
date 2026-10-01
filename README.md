@@ -63,3 +63,14 @@ Copyright 2026 Julian Y. Richard Corbet. Licensed under
 [WITH LGPL-3.0-linking-exception](LICENSES/LGPL-3.0-linking-exception.txt).
 See [LICENSE.md](LICENSE.md). LGPL ("LGPL executes, FSL decides") so that LGPL
 gate leaves can use it without depending on FSL code.
+
+## Continuous verification
+
+Dependency updates follow main and are tested against one CI-resolved lockfile.
+Line and branch coverage target 100%; failures remain blocking. See
+[the coverage contract](docs/COVERAGE.md) for measurement and exclusions.
+
+The same deterministic lifecycle/refusal vectors execute natively and as real
+Wasm in Node. Native proptest still compares selection against the independent
+reference model. Wasm test tooling is a target-specific development dependency;
+the production executor retains no dependencies, clock, I/O or randomness.

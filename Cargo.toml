@@ -16,8 +16,11 @@ crate-type = ["rlib"]
 # Pure logic: no runtime dependencies, no I/O, no clock, no randomness.
 [dependencies]
 
-[dev-dependencies]
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 proptest = "1.11"
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "0.3"
 
 [lints.rust]
 unsafe_code = "forbid"

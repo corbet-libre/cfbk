@@ -1,4 +1,5 @@
 //! Property tests: the executor against an independent reference model.
+#![cfg(not(target_arch = "wasm32"))]
 use cfbk::{Candidate, Config, Fallback, Health, Switch, Unavailable};
 use proptest::prelude::*;
 use std::collections::BTreeSet;
