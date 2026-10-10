@@ -7,9 +7,9 @@ candidates and a minimum standard every selected candidate must meet. The
 consumer reports health; `cfbk` answers which candidate is active and tells the
 consumer whenever that changes.
 
-First consumer: the `cmsh` transport facade (Veilid and Tor backends). Planned
-second consumer: provider cascades in gates via `cvld` (for example SMS
-providers in `cphn`, payment providers in `cpmt`).
+Consumers include the `cmsh` transport facade (Veilid and Tor backends),
+phone/provider cascades in `cphn`, and payment/provider cascades in `cpmt`.
+These reusable domain libraries supply their own request and capability bindings.
 
 Status: implemented (0.0.0, not published). Pure logic, no dependencies.
 
