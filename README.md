@@ -13,6 +13,11 @@ providers in `cphn`, payment providers in `cpmt`).
 
 Status: implemented (0.0.0, not published). Pure logic, no dependencies.
 
+`cost` adds request-bound cost previews, caller-selected cheapest/configured
+ordering and a total-budget cascade. Unknown prices cannot authorize dispatch;
+pending or uncertain effects block fallback. Simulation, provider sandbox and
+production have distinct dispatch permissions. See [costed actions](docs/COSTS.md).
+
 ## Model
 
 - **Candidate:** an identifier plus the set of properties it declares (for a

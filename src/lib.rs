@@ -30,6 +30,8 @@
 use std::collections::BTreeSet;
 use std::fmt;
 
+pub mod cost;
+
 /// A candidate with the properties it declares.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Candidate<Id, P> {
