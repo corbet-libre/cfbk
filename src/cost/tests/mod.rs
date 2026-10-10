@@ -359,3 +359,39 @@ proptest::proptest! {
         }
     }
 }
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+#[cfg_attr(not(target_arch = "wasm32"), test)]
+fn charge_violations_retain_every_known_fee_without_implicit_conversion() {
+    let mut cascade = plan(vec![offer("a", 2), offer("b", 3)], 5, 2, Mode::Production)
+        .unwrap()
+        .start();
+    assert!(cascade.charge_violation().is_none());
+    cascade.begin(10).unwrap();
+    cascade
+        .complete(Outcome::SafeFailure, Some(amount(1)))
+        .unwrap();
+    cascade.begin(10).unwrap();
+    assert_eq!(
+        cascade.complete(Outcome::Success, Some(amount(4))),
+        Err(Error::Charge)
+    );
+    let violation = cascade.charge_violation().unwrap();
+    assert_eq!(violation.prior, amount(1));
+    assert_eq!(violation.reserved, amount(3));
+    assert_eq!(violation.reported, amount(4));
+    assert_eq!(violation.clone(), *violation);
+    assert!(!format!("{violation:?}").is_empty());
+    assert_eq!(cascade.begin(10).unwrap_err(), Error::Finished);
+    let mut cascade = plan(vec![offer("a", u64::MAX)], u64::MAX, 1, Mode::Production)
+        .unwrap()
+        .start();
+    cascade.begin(10).unwrap();
+    let mut foreign = amount(u64::MAX);
+    foreign.unit.code = "OTHER".into();
+    assert_eq!(
+        cascade.complete(Outcome::Uncertain, Some(foreign.clone())),
+        Err(Error::Charge)
+    );
+    assert_eq!(cascade.charge_violation().unwrap().reported, foreign);
+}

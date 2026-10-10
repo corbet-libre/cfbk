@@ -10,7 +10,7 @@ use crate::{Candidate, Config, Fallback};
 use std::fmt;
 
 mod execution;
-pub use execution::{Cascade, DispatchPermit, Outcome};
+pub use execution::{Cascade, ChargeViolation, DispatchPermit, Outcome};
 
 /// Explicit denomination. Different scales are never implicitly converted.
 #[derive(Clone, Debug, PartialEq, Eq)]

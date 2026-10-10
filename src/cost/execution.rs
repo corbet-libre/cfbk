@@ -16,6 +16,18 @@ pub enum Outcome {
     Uncertain,
 }
 
+/// A provider-reported fee that violated the authorization. It is retained even
+/// though the cascade stops; callers must not account only for the old reservation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ChargeViolation {
+    /// Exposure from earlier attempts, excluding this attempt's reservation.
+    pub prior: Amount,
+    /// Maximum authorized for the offending attempt.
+    pub reserved: Amount,
+    /// Actual reported fee, including its original unit. Never silently converted.
+    pub reported: Amount,
+}
+
 /// Move-only permission for a bounded attempt. It is not a verified domain proof.
 /// Obtain it through [`Cascade::begin`]; validate it at the actual dispatch edge.
 #[derive(Debug)]
@@ -62,6 +74,7 @@ pub struct Cascade<Id, P> {
     charged: u64,
     pending: Option<u64>,
     finished: bool,
+    violation: Option<ChargeViolation>,
 }
 
 impl<Id: Clone + Eq + fmt::Debug, P: Ord + Clone + fmt::Debug> Cascade<Id, P> {
@@ -73,6 +86,7 @@ impl<Id: Clone + Eq + fmt::Debug, P: Ord + Clone + fmt::Debug> Cascade<Id, P> {
             charged: 0,
             pending: None,
             finished: false,
+            violation: None,
         }
     }
 
@@ -120,6 +134,17 @@ impl<Id: Clone + Eq + fmt::Debug, P: Ord + Clone + fmt::Debug> Cascade<Id, P> {
         if let Some(cost) = &actual
             && (cost.unit != self.plan.budget.unit || cost.atoms > reserved)
         {
+            self.violation = Some(ChargeViolation {
+                prior: Amount {
+                    unit: self.plan.budget.unit.clone(),
+                    atoms: self.charged - reserved,
+                },
+                reserved: Amount {
+                    unit: self.plan.budget.unit.clone(),
+                    atoms: reserved,
+                },
+                reported: cost.clone(),
+            });
             self.finished = true;
             return Err(Error::Charge);
         }
@@ -134,7 +159,10 @@ impl<Id: Clone + Eq + fmt::Debug, P: Ord + Clone + fmt::Debug> Cascade<Id, P> {
         Ok(())
     }
 
-    /// Total known charge plus conservatively reserved unknown exposure.
+    /// Total reconciled charge plus conservatively reserved unknown exposure.
+    /// After `Error::Charge`, this remains the authorized reservation ledger;
+    /// inspect [`Self::charge_violation`] for the fee that exceeded it or changed
+    /// unit. That record's prior + reported values are the actual accounting inputs.
     pub fn exposure(&self) -> Amount {
         Amount {
             unit: self.plan.budget.unit.clone(),
@@ -148,5 +176,9 @@ impl<Id: Clone + Eq + fmt::Debug, P: Ord + Clone + fmt::Debug> Cascade<Id, P> {
     /// Number of attempts for which exposure was reserved.
     pub fn attempts(&self) -> usize {
         self.begun
+    }
+    /// Preserve unbudgeted or foreign-unit provider charges for host reconciliation.
+    pub fn charge_violation(&self) -> Option<&ChargeViolation> {
+        self.violation.as_ref()
     }
 }

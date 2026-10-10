@@ -51,3 +51,10 @@ Tests exercise the complete transition contract with dummy tariffs and actual
 pure code, including an independent integer-budget property model. They require
 no service accounts or provider calls. No live sandbox, billing or deployment
 is part of verification. Existing transport fallback APIs remain unchanged.
+
+A reported charge outside the authorized bound or in another unit terminates the
+cascade with `Error::Charge`. `charge_violation()` retains the earlier exposure,
+authorized attempt maximum and exact reported amount/unit. After that error,
+`exposure()` describes the authorization ledger, not the actual overrun total.
+The host reconciles prior plus reported cost, using a wider total or multiple
+units as needed; no provider fee is silently discarded or converted.
