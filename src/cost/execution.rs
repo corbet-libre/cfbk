@@ -117,11 +117,11 @@ impl<Id: Clone + Eq + fmt::Debug, P: Ord + Clone + fmt::Debug> Cascade<Id, P> {
             return Err(Error::Finished);
         }
         let reserved = self.pending.ok_or(Error::Finished)?;
-        if let Some(cost) = &actual {
-            if cost.unit != self.plan.budget.unit || cost.atoms > reserved {
-                self.finished = true;
-                return Err(Error::Charge);
-            }
+        if let Some(cost) = &actual
+            && (cost.unit != self.plan.budget.unit || cost.atoms > reserved)
+        {
+            self.finished = true;
+            return Err(Error::Charge);
         }
         if matches!(outcome, Outcome::Pending | Outcome::Uncertain) {
             return Ok(());
