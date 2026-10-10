@@ -13,6 +13,8 @@ cache_root=${CI_CACHE_ROOT:-${CARGO_HOME:-}}
 [[ $cache_root = /* ]] || { echo 'An absolute persistent CI_CACHE_ROOT or CARGO_HOME is required' >&2; exit 2; }
 namespace=$(printf '%s' "$CI_REPOSITORY_URL" | sha256sum | cut -c1-24)
 state="$cache_root/ccid-cached/$namespace"
+export ARTIFACT_ROOT="$state/release-artifacts"
+mkdir -p "$ARTIFACT_ROOT"
 toolchains=${CI_TOOLCHAIN_ROOT:-$cache_root/ccid-cached/toolchains}
 [[ $toolchains = /* ]] || { echo 'CI_TOOLCHAIN_ROOT must be absolute' >&2; exit 2; }
 mkdir -p "$state" "$toolchains"
@@ -73,5 +75,19 @@ node --version
 python3 --version
 rustup run nightly rustc -vV
 rustup run nightly cargo llvm-cov --version
+# Preserve completed measurement artifacts even when the coverage gate fails.
+# Crow removes its source checkout after reporting the verdict.
+retain_coverage() {
+  local status=$?
+  trap - EXIT
+  for report in coverage.json coverage.lcov coverage.txt; do
+    if [[ -f "$report" && ! -L "$report" ]]; then
+      mkdir -p "$ARTIFACT_ROOT/$CI_COMMIT_SHA" || status=1
+      cp -- "$report" "$ARTIFACT_ROOT/$CI_COMMIT_SHA/$report" || status=1
+    fi
+  done
+  exit "$status"
+}
+trap retain_coverage EXIT
 "$CCID_BIN" cached --repo "$PWD" --check verify
 test -s ".ccid/results/verify.jsonl"
