@@ -19,7 +19,7 @@ Write all code comments and documentation in English.
 
 ## Quality boundary
 
-- Workstations edit and format; Crow validates committed candidates. Required
+- Local checkouts edit and format; Crow validates committed candidates. Required
   formatting, clippy, native/Wasm tests and coverage must pass before completion.
   Forgejo is primary. No live provider calls, spending or registry publication.
 - Every change to selection semantics needs a matching property test against
