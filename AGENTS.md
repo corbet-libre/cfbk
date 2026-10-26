@@ -1,26 +1,29 @@
-# Agent instructions
+# cfbk — agent instructions
 
-Write all code comments and documentation in English.
+Work in a lane, never in ~/agents/scratch/ws. From the repo dir:
+`cargo fmt --all --check`,
+`cargo clippy --locked --all-targets -- -D warnings`,
+`cargo test --locked`,
+`cargo check --locked --target wasm32-unknown-unknown`,
+`CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-bindgen-test-runner cargo test
+--locked --target wasm32-unknown-unknown --lib`.
+Pure logic: zero runtime deps, no I/O, clock, randomness or async runtime.
+Consumers (workspace Cargo.tomls): cmsh, cphn, cpmt, cvld, cvch, cmbx, cgbl.
+Coverage gate: .github/test-source-coverage.py + check-source-coverage.py.
 
-## Product boundary
+Invariants:
+- Active is the first ordered healthy candidate meeting the standard; a report
+  returns Switch iff the active changed (tests/properties.rs:91).
+- Never below the minimum or failed; empty selection is Unavailable, never a
+  silent downgrade (tests/properties.rs:114).
+- Deterministic: same config + report sequence gives the same outcome (:134).
+- Recovery is explicit: Healthy report or reset only (:177).
+- excluded() is exactly the ordered candidates below the minimum (:159).
+- Costs (rules: docs/COSTS.md): unknown prices never dispatch; pending/uncertain
+  outcomes keep the reservation and block fallback; over-bound actuals are
+  terminal (src/cost/tests/mod.rs:127,203,238,281).
+- Every selection-semantics change needs a property test against the reference
+  model in tests/properties.rs.
 
-- Ordered fallback executor: a configured order, a minimum standard, consumer
-  health reports, one active candidate, no silent downgrade.
-- Consumers: `cmsh` (transport backends) and gate provider cascades via `cvld`.
-- Pure logic: no I/O, clock, randomness, async runtime or dependencies. Keep it
-  that way; timing and probing belong to the consumer.
-- Never decides policy (order, standard); it executes what it is given.
-- Costed action cascades execute caller-selected ordering and a total budget.
-  Unknown prices cannot authorize dispatch; pending/uncertain effects block
-  fallback. Cost provenance and modes remain explicit. See docs/COSTS.md.
-- This crate is LGPL-3.0-only WITH LGPL-3.0-linking-exception. Do not add
-  implementation code available only under the full GPL or AGPL, and never
-  depend on FSL code.
-
-## Quality boundary
-
-- Local checkouts edit and format; Crow validates committed candidates. Required
-  formatting, clippy, native/Wasm tests and coverage must pass before completion.
-  Forgejo is primary. No live provider calls, spending or registry publication.
-- Every change to selection semantics needs a matching property test against
-  the reference model in `tests/properties.rs`.
+Pointers: docs/COSTS.md, docs/COVERAGE.md, tests/properties.rs,
+src/tests/mod.rs, src/cost/tests/mod.rs.
